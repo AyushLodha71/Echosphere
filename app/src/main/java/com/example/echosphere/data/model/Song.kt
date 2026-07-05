@@ -4,7 +4,7 @@ data class Song(
     val id: String,
     val title: String,
     val artist: String,
-    val thumbnailUrl: String?,
+    val thumbnailId: String?,
     val duration: Long,
     val streamUrl: String?
 )

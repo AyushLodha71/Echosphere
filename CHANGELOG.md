@@ -13,10 +13,10 @@ Format follows [Semantic Versioning](https://semver.org/):
 ### Changed
 
 #### Song.kt
-- Renamed field `thumbnailUrl` to `youtubeId` — more accurate since the field stores
+- Renamed field `thumbnailUrl` to `thumbnailId` — more accurate since the field stores
   a YouTube video ID (e.g. "4NRXx6U8ABQ"), not a full URL. The full thumbnail URL
   is constructed dynamically wherever needed using string templates:
-  `"https://i.ytimg.com/vi/${song.youtubeId}/hqdefault.jpg"`
+  `"https://i.ytimg.com/vi/${song.thumbnailId}/hqdefault.jpg"`
 
 #### AppNavigation.kt
 - Removed internal `rememberNavController()` call — `navController` is now accepted

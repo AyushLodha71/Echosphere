@@ -8,6 +8,7 @@ import androidx.navigation.NavHostController
 import androidx.compose.ui.Modifier
 import com.example.echosphere.ui.screens.HomeScreen
 import com.example.echosphere.ui.screens.NowPlayingScreen
+import com.example.echosphere.ui.screens.SearchScreen
 import com.example.echosphere.viewmodel.PlayerViewModel
 
 @Composable
@@ -24,7 +25,7 @@ fun AppNavigation(
         }
 
         composable(Screen.Search.route) {
-            Text("Search Screen")
+            SearchScreen(playerViewModel = playerViewModel)
         }
 
         composable(Screen.Library.route) {

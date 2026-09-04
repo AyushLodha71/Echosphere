@@ -13,4 +13,10 @@ interface EchosphereApi {
         @Query("title") title: String? = null,
         @Query("artist") artist: String? = null
     ): Response<StreamResponse>
+
+    @GET("search")
+    suspend fun search(
+        @Query("q") query: String
+    ): Response<List<SearchResult>>
+
 }

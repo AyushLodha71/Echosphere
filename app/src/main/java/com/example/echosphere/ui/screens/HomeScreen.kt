@@ -15,14 +15,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.width
 import androidx.navigation.NavController
 import com.example.echosphere.ui.navigation.Screen
+import com.example.echosphere.viewmodel.PlayerViewModel
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, playerViewModel: PlayerViewModel) {
 
     val fakeSongs = listOf(
-        Song(id = "1", title = "Blinding Lights", artist = "The Weeknd", thumbnailId = "4NRXx6U8ABQ", duration = 200000, streamUrl = null),
-        Song(id = "2", title = "APT.", artist = "ROSÉ & Bruno Mars", thumbnailId = "ekr2nIex040", duration = 177000, streamUrl = null),
-        Song(id = "3", title = "Espresso", artist = "Sabrina Carpenter", thumbnailId = "eVli-tstM5E", duration = 175000, streamUrl = null)
+        Song(id = "dQw4w9WgXcQ", title = "Never Gonna Give You Up", artist = "Rick Astley", thumbnailId = "dQw4w9WgXcQ", duration = 200000, streamUrl = null),
+        Song(id = "9bZkp7q19f0", title = "Gangnam Style", artist = "PSY", thumbnailId = "9bZkp7q19f0", duration = 252000, streamUrl = null),
+        Song(id = "kJQP7kiw5Fk", title = "Despacito", artist = "Luis Fonsi", thumbnailId = "kJQP7kiw5Fk", duration = 282000, streamUrl = null),
+    Song(id = "eVli-tstM5E", title = "Espresso", artist = "Sabrina Carpenter", thumbnailId = "eVli-tstM5E", duration = 175000, streamUrl = null)
     )
 
     LazyRow(
@@ -33,6 +35,7 @@ fun HomeScreen(navController: NavController) {
                 modifier = Modifier
                     .width(120.dp)
                     .clickable {
+                        playerViewModel.play(song)
                         navController.navigate(Screen.NowPlaying.route)
                     }
             ) {
@@ -47,5 +50,4 @@ fun HomeScreen(navController: NavController) {
             }
         }
     }
-
 }

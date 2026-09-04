@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.echosphere.ui.components.BottomNav
@@ -17,6 +18,7 @@ import com.example.echosphere.ui.components.MiniPlayer
 import com.example.echosphere.ui.navigation.AppNavigation
 import com.example.echosphere.ui.navigation.Screen
 import com.example.echosphere.ui.theme.EchosphereTheme
+import com.example.echosphere.viewmodel.PlayerViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,17 +30,20 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
+                val playerViewModel: PlayerViewModel = viewModel()
+
                 Scaffold(modifier = Modifier.fillMaxSize(),
                     bottomBar = {
                         Column {
                             if (currentRoute != Screen.NowPlaying.route) {
-                                MiniPlayer(navController)
+                                MiniPlayer(navController, playerViewModel)
                                 BottomNav(navController)
                             }
                         }
                     }) { innerPadding ->
                     AppNavigation(
                         navController = navController,
+                        playerViewModel = playerViewModel,
                         modifier = Modifier.padding(innerPadding))
                 }
             }

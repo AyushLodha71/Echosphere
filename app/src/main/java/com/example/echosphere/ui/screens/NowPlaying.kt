@@ -42,23 +42,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.navigation.NavController
+import com.example.echosphere.viewmodel.PlayerViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.material.icons.filled.Pause
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NowPlayingScreen(navController: NavController) {
+fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewModel) {
 
-    // ─────────────────────────────────────────
-    // Fake song data — replaced by real data
-    // when ExoPlayer + backend is wired up
-    // ─────────────────────────────────────────
-    val nowPlayingSong = Song(id = "1", title = "Blinding Lights", artist = "The Weeknd", thumbnailId = "4NRXx6U8ABQ", duration = 200000, streamUrl = null)
+    val currentSong by playerViewModel.currentSong.collectAsState()
+    val isPlaying by playerViewModel.isPlaying.collectAsState()
 
-    // ─────────────────────────────────────────
+    if (currentSong == null) {
+        Text("Nothing playing")
+        return
+    }
+    val nowPlayingSong = currentSong!!
+
+    // -----------------------------------------
     // Bottom sheet state
     // showSheet   → controls whether sheet is visible
     // sheetState  → tracks expanded/collapsed state
     // selectedTab → which tab is active (0=Playlist, 1=Lyrics, 2=Related)
-    // ─────────────────────────────────────────
+    // -----------------------------------------
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     var selectedTab by remember { mutableStateOf(0) }
@@ -71,9 +77,9 @@ fun NowPlayingScreen(navController: NavController) {
             .padding(16.dp)
     ){
 
-        // ┌─────────────────────────────┐
+        // ┌-----------------------------┐
         // │  ↓ (back)          ⋮ (more) │
-        // └─────────────────────────────┘
+        // └-----------------------------┘
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -89,21 +95,21 @@ fun NowPlayingScreen(navController: NavController) {
             }
         }
 
-        // ┌─────────────────────────────┐
+        // ┌-----------------------------┐
         // │                             │
         // │        [Album Art]          │
         // │                             │
-        // └─────────────────────────────┘
+        // └-----------------------------┘
         AsyncImage(
             model = "https://i.ytimg.com/vi/${nowPlayingSong.thumbnailId}/hqdefault.jpg",
             contentDescription = nowPlayingSong.title,
             modifier = Modifier.size(400.dp)
         )
 
-        // ┌─────────────────────────────┐
+        // ┌-----------------------------┐
         // │  Song Title             ♡   │
         // │  Artist Name                │
-        // └─────────────────────────────┘
+        // └-----------------------------┘
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -127,10 +133,10 @@ fun NowPlayingScreen(navController: NavController) {
             }
         }
 
-        // ┌─────────────────────────────┐
-        // │  ────●──────────────────    │  ← progress slider
+        // ┌-----------------------------┐
+        // │  ----●------------------    │  ← progress slider
         // │  0:00                3:21   │  ← timestamps
-        // └─────────────────────────────┘
+        // └-----------------------------┘
         Slider(
             value = 0.3f,
             onValueChange = { }
@@ -150,9 +156,9 @@ fun NowPlayingScreen(navController: NavController) {
             )
         }
 
-        // ┌─────────────────────────────┐
+        // ┌-----------------------------┐
         // │  🔀   ⏮   ▶   ⏭   ⏱     │  ← playback controls
-        // └─────────────────────────────┘
+        // └-----------------------------┘
         // All onClick = { } for now — wired to ExoPlayer in Phase 2
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -166,8 +172,11 @@ fun NowPlayingScreen(navController: NavController) {
             IconButton(onClick = { }) {
                 Icon(Icons.Default.SkipPrevious, contentDescription = "PreviousSong")
             }
-            IconButton(onClick = { }) {
-                Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+            IconButton(onClick = { playerViewModel.togglePlayPause() }) {
+                Icon(
+                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = if (isPlaying) "Pause" else "Play"
+                )
             }
             IconButton(onClick = { }) {
                 Icon(Icons.Default.SkipNext, contentDescription = "NextSong")
@@ -182,10 +191,10 @@ fun NowPlayingScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // ┌─────────────────────────────┐
+        // ┌-----------------------------┐
         // │          ━━━━               │  ← drag handle (visual hint)
         // │  Playlist  Lyrics  Related  │  ← tab triggers
-        // └─────────────────────────────┘
+        // └-----------------------------┘
         // Drag up OR tap any tab to open the bottom sheet
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -232,11 +241,11 @@ fun NowPlayingScreen(navController: NavController) {
 
     }
 
-    // ─────────────────────────────────────────
+    // -----------------------------------------
     // Bottom Sheet
     // Opens when showSheet = true
     // Closes when user drags down or taps outside
-    // ─────────────────────────────────────────
+    // -----------------------------------------
     if (showSheet) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
@@ -283,11 +292,11 @@ fun NowPlayingScreen(navController: NavController) {
 
 }
 
-// ─────────────────────────────────────────
+// -----------------------------------------
 // Tab content composables
 // Placeholder text for now
 // Phase 3 → real queue, lyrics API, related videos
-// ─────────────────────────────────────────
+// -----------------------------------------
 @Composable
 fun PlaylistTab() {
     Text("Playlist coming soon", modifier = Modifier.padding(16.dp))

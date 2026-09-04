@@ -8,14 +8,19 @@ import androidx.navigation.NavHostController
 import androidx.compose.ui.Modifier
 import com.example.echosphere.ui.screens.HomeScreen
 import com.example.echosphere.ui.screens.NowPlayingScreen
+import com.example.echosphere.viewmodel.PlayerViewModel
 
 @Composable
-fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifier) {
-    
+fun AppNavigation(
+    navController: NavHostController,
+    playerViewModel: PlayerViewModel,
+    modifier: Modifier = Modifier
+) {
+
     NavHost(navController = navController, startDestination = Screen.Home.route, modifier = modifier) {
 
         composable(Screen.Home.route) {
-            HomeScreen(navController)
+            HomeScreen(navController, playerViewModel)
         }
 
         composable(Screen.Search.route) {
@@ -27,7 +32,7 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
         }
 
         composable(Screen.NowPlaying.route) {
-            NowPlayingScreen(navController)
+            NowPlayingScreen(navController, playerViewModel)
         }
 
     }

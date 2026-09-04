@@ -169,7 +169,7 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
             IconButton(onClick = { }) {
                 Icon(Icons.Default.Shuffle, contentDescription = "Shuffle")
             }
-            IconButton(onClick = { }) {
+            IconButton(onClick = { playerViewModel.playPrevious() }) {
                 Icon(Icons.Default.SkipPrevious, contentDescription = "PreviousSong")
             }
             IconButton(onClick = { playerViewModel.togglePlayPause() }) {
@@ -178,7 +178,7 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
                     contentDescription = if (isPlaying) "Pause" else "Play"
                 )
             }
-            IconButton(onClick = { }) {
+            IconButton(onClick = { playerViewModel.playNext() }) {
                 Icon(Icons.Default.SkipNext, contentDescription = "NextSong")
             }
             //IconButton(onClick = { }) {

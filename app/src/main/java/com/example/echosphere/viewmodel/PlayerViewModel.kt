@@ -60,10 +60,15 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                     ) {
                         _currentSong.value = mediaItem?.let { songFromMediaItem(it) }
 
-                        // On auto-advance, move our index with the player and look ahead.
-                        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
-                            currentIndex += 1
-                            prepareNext()
+                        // Derive the true index from what's actually playing, so it never drifts
+                        // regardless of who triggered the move (auto, notification, in-app).
+                        val playingId = mediaItem?.mediaId
+                        if (playingId != null) {
+                            val idx = queue.indexOfFirst { it.id == playingId }
+                            if (idx != -1) {
+                                currentIndex = idx
+                                prepareNext()
+                            }
                         }
                     }
 
@@ -204,6 +209,18 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         } else {
             controller?.play()
         }
+    }
+
+    // Skip to the next song in the queue (manual).
+    fun playNext() {
+        controller?.seekToNextMediaItem()
+    }
+
+    // Skip to the previous song in the queue (manual).
+    fun playPrevious() {
+        if (currentIndex - 1 < 0) return
+        currentIndex -= 1
+        resolveAndPlay(queue[currentIndex])
     }
 
     // Release the controller when the ViewModel is destroyed.

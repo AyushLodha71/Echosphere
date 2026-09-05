@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -34,6 +36,14 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _status = MutableStateFlow("")
     val status: StateFlow<String> = _status.asStateFlow()
+
+    private val _repeatOne = MutableStateFlow(false)
+    val repeatOne: StateFlow<Boolean> = _repeatOne.asStateFlow()
+
+    private val _sleepTimerMinutes = MutableStateFlow<Int?>(null)
+    val sleepTimerMinutes: StateFlow<Int?> = _sleepTimerMinutes.asStateFlow()
+
+    private var sleepTimerJob: Job? = null
 
     private var queue: List<Song> = emptyList()
     private var currentIndex: Int = 0
@@ -52,6 +62,15 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 newController.addListener(object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         _isPlaying.value = isPlaying
+                    }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        if (playbackState == Player.STATE_ENDED &&
+                            !_repeatOne.value &&
+                            queue.isNotEmpty()
+                        ) {
+                            play(queue, 0)
+                        }
                     }
 
                     override fun onMediaItemTransition(
@@ -211,9 +230,22 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun toggleRepeatOne() {
+        val newValue = !_repeatOne.value
+        _repeatOne.value = newValue
+        controller?.repeatMode =
+            if (newValue) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+    }
+
     // Skip to the next song in the queue (manual).
     fun playNext() {
-        controller?.seekToNextMediaItem()
+        val nextIndex = currentIndex + 1
+        if (nextIndex < queue.size) {
+            controller?.seekToNextMediaItem()
+        } else if (queue.isNotEmpty()) {
+            // At the end -> loop to the first song.
+            play(queue, 0)
+        }
     }
 
     // Skip to the previous song in the queue (manual).
@@ -223,9 +255,26 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         resolveAndPlay(queue[currentIndex])
     }
 
+    fun setSleepTimer(minutes: Int) {
+        sleepTimerJob?.cancel()
+        _sleepTimerMinutes.value = minutes
+        sleepTimerJob = viewModelScope.launch {
+            delay(minutes * 60_000L)
+            controller?.pause()
+            _sleepTimerMinutes.value = null
+        }
+    }
+
+    fun cancelSleepTimer() {
+        sleepTimerJob?.cancel()
+        sleepTimerJob = null
+        _sleepTimerMinutes.value = null
+    }
+
     // Release the controller when the ViewModel is destroyed.
     override fun onCleared() {
         super.onCleared()
+        sleepTimerJob?.cancel()
         MediaController.releaseFuture(controllerFuture)
         controller = null
     }

@@ -1,5 +1,4 @@
 package com.example.echosphere.ui.screens
-
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Shuffle
@@ -43,22 +43,34 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.navigation.NavController
 import com.example.echosphere.viewmodel.PlayerViewModel
+import com.example.echosphere.viewmodel.PlaylistViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.material.icons.filled.Pause
-
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewModel) {
-
+fun NowPlayingScreen(
+    navController: NavController,
+    playerViewModel: PlayerViewModel,
+    playlistViewModel: PlaylistViewModel
+) {
     val currentSong by playerViewModel.currentSong.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
-
     if (currentSong == null) {
         Text("Nothing playing")
         return
     }
     val nowPlayingSong = currentSong!!
-
+    val isLiked by playlistViewModel.isSongLiked(nowPlayingSong.id).collectAsState(initial = false)
+    val repeatOne by playerViewModel.repeatOne.collectAsState()
+    val sleepTimerMinutes by playerViewModel.sleepTimerMinutes.collectAsState()
+    val userPlaylists by playlistViewModel.playlists.collectAsState(initial = emptyList())
+    var showSleepDialog by remember { mutableStateOf(false) }
+    var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     // -----------------------------------------
     // Bottom sheet state
     // showSheet   → controls whether sheet is visible
@@ -68,7 +80,6 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     var selectedTab by remember { mutableStateOf(0) }
-
     Column (
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -76,7 +87,6 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
             .fillMaxSize()
             .padding(16.dp)
     ){
-
         // ┌-----------------------------┐
         // │  ↓ (back)          ⋮ (more) │
         // └-----------------------------┘
@@ -89,12 +99,10 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
             IconButton(onClick = { navController.popBackStack() }) {
                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Back")
             }
-
-            IconButton(onClick = { }) {
+            IconButton(onClick = { showAddToPlaylistDialog = true }) {
                 Icon(Icons.Default.MoreVert, contentDescription = "More")
             }
         }
-
         // ┌-----------------------------┐
         // │                             │
         // │        [Album Art]          │
@@ -105,7 +113,6 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
             contentDescription = nowPlayingSong.title,
             modifier = Modifier.size(400.dp)
         )
-
         // ┌-----------------------------┐
         // │  Song Title             ♡   │
         // │  Artist Name                │
@@ -128,11 +135,13 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
-            IconButton(onClick = { }) {
-                Icon(Icons.Default.FavoriteBorder, contentDescription = "More")
+            IconButton(onClick = { playlistViewModel.toggleLike(nowPlayingSong, isLiked) }) {
+                Icon(
+                    imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = if (isLiked) "Unlike" else "Like"
+                )
             }
         }
-
         // ┌-----------------------------┐
         // │  ----●------------------    │  ← progress slider
         // │  0:00                3:21   │  ← timestamps
@@ -141,7 +150,6 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
             value = 0.3f,
             onValueChange = { }
         )
-
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -155,11 +163,9 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
                 text = "3:21",
             )
         }
-
         // ┌-----------------------------┐
         // │  🔀   ⏮   ▶   ⏭   ⏱     │  ← playback controls
         // └-----------------------------┘
-        // All onClick = { } for now — wired to ExoPlayer in Phase 2
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -181,21 +187,32 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
             IconButton(onClick = { playerViewModel.playNext() }) {
                 Icon(Icons.Default.SkipNext, contentDescription = "NextSong")
             }
-            //IconButton(onClick = { }) {
-              //  Icon(Icons.Default.Repeat, contentDescription = "Repeat")
-            //}
-            IconButton(onClick = { }) {
-                Icon(Icons.Default.Timer, contentDescription = "Timer")
+            IconButton(onClick = { playerViewModel.toggleRepeatOne() }) {
+                Icon(
+                    Icons.Default.Repeat,
+                    contentDescription = if (repeatOne) "Repeat one on" else "Repeat one off",
+                    tint = if (repeatOne)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurface
+                )
+            }
+            IconButton(onClick = { showSleepDialog = true }) {
+                Icon(
+                    Icons.Default.Timer,
+                    contentDescription = if (sleepTimerMinutes != null) "Sleep timer on" else "Sleep timer",
+                    tint = if (sleepTimerMinutes != null)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurface
+                )
             }
         }
-
         Spacer(modifier = Modifier.weight(1f))
-
         // ┌-----------------------------┐
         // │          ━━━━               │  ← drag handle (visual hint)
         // │  Playlist  Lyrics  Related  │  ← tab triggers
         // └-----------------------------┘
-        // Drag up OR tap any tab to open the bottom sheet
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
@@ -238,13 +255,91 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
                 }
             }
         }
-
     }
-
+    if (showAddToPlaylistDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddToPlaylistDialog = false },
+            title = { Text("Add to playlist") },
+            text = {
+                if (userPlaylists.isEmpty()) {
+                    Text("No playlists yet. Create one in your library first.")
+                } else {
+                    Column {
+                        userPlaylists.forEach { playlist ->
+                            Text(
+                                text = playlist.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        playlistViewModel.addSongToPlaylist(playlist.id, nowPlayingSong)
+                                        Toast.makeText(
+                                            context,
+                                            "Added to ${playlist.name}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        showAddToPlaylistDialog = false
+                                    }
+                                    .padding(vertical = 12.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = { },
+            dismissButton = {
+                TextButton(onClick = { showAddToPlaylistDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    if (showSleepDialog) {
+        AlertDialog(
+            onDismissRequest = { showSleepDialog = false },
+            title = { Text("Sleep timer") },
+            text = {
+                Column {
+                    listOf(15, 30, 45, 60).forEach { minutes ->
+                        Text(
+                            text = "$minutes minutes",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    playerViewModel.setSleepTimer(minutes)
+                                    Toast.makeText(context, "Sleep timer set for $minutes min", Toast.LENGTH_SHORT).show()
+                                    showSleepDialog = false
+                                }
+                                .padding(vertical = 12.dp)
+                        )
+                    }
+                    if (sleepTimerMinutes != null) {
+                        Text(
+                            text = "Turn off",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    playerViewModel.cancelSleepTimer()
+                                    showSleepDialog = false
+                                }
+                                .padding(vertical = 12.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = { },
+            dismissButton = {
+                TextButton(onClick = { showSleepDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
     // -----------------------------------------
     // Bottom Sheet
-    // Opens when showSheet = true
-    // Closes when user drags down or taps outside
     // -----------------------------------------
     if (showSheet) {
         ModalBottomSheet(
@@ -258,7 +353,6 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
                 thickness = 4.dp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
             )
-
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier
@@ -281,7 +375,6 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
                     }
                 }
             }
-
             when (selectedTab) {
                 0 -> PlaylistTab()
                 1 -> LyricsTab()
@@ -289,24 +382,18 @@ fun NowPlayingScreen(navController: NavController, playerViewModel: PlayerViewMo
             }
         }
     }
-
 }
-
 // -----------------------------------------
 // Tab content composables
-// Placeholder text for now
-// Phase 3 → real queue, lyrics API, related videos
 // -----------------------------------------
 @Composable
 fun PlaylistTab() {
     Text("Playlist coming soon", modifier = Modifier.padding(16.dp))
 }
-
 @Composable
 fun LyricsTab() {
     Text("Lyrics coming soon", modifier = Modifier.padding(16.dp))
 }
-
 @Composable
 fun RelatedTab() {
     Text("Related coming soon", modifier = Modifier.padding(16.dp))

@@ -19,6 +19,7 @@ import com.example.echosphere.ui.navigation.AppNavigation
 import com.example.echosphere.ui.navigation.Screen
 import com.example.echosphere.ui.theme.EchosphereTheme
 import com.example.echosphere.viewmodel.PlayerViewModel
+import com.example.echosphere.viewmodel.PlaylistViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,6 +32,7 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = navBackStackEntry?.destination?.route
 
                 val playerViewModel: PlayerViewModel = viewModel()
+                val playlistViewModel: PlaylistViewModel = viewModel()
 
                 Scaffold(modifier = Modifier.fillMaxSize(),
                     bottomBar = {
@@ -44,6 +46,7 @@ class MainActivity : ComponentActivity() {
                     AppNavigation(
                         navController = navController,
                         playerViewModel = playerViewModel,
+                        playlistViewModel = playlistViewModel,
                         modifier = Modifier.padding(innerPadding))
                 }
             }

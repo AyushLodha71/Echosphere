@@ -1,20 +1,25 @@
 package com.example.echosphere.ui.navigation
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.NavHostController
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.echosphere.ui.screens.HomeScreen
+import com.example.echosphere.ui.screens.LibraryScreen
 import com.example.echosphere.ui.screens.NowPlayingScreen
 import com.example.echosphere.ui.screens.SearchScreen
 import com.example.echosphere.viewmodel.PlayerViewModel
+import com.example.echosphere.viewmodel.PlaylistViewModel
+import com.example.echosphere.ui.screens.PlaylistDetailScreen
 
 @Composable
 fun AppNavigation(
     navController: NavHostController,
     playerViewModel: PlayerViewModel,
+    playlistViewModel: PlaylistViewModel,
     modifier: Modifier = Modifier
 ) {
 
@@ -29,11 +34,19 @@ fun AppNavigation(
         }
 
         composable(Screen.Library.route) {
-            Text("Library Screen")
+            LibraryScreen(playlistViewModel = playlistViewModel, navController = navController)
         }
 
         composable(Screen.NowPlaying.route) {
-            NowPlayingScreen(navController, playerViewModel)
+            NowPlayingScreen(navController, playerViewModel, playlistViewModel)
+        }
+
+        composable(
+            route = Screen.Playlist.route,
+            arguments = listOf(navArgument("playlistId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val playlistId = backStackEntry.arguments?.getLong("playlistId") ?: return@composable
+            PlaylistDetailScreen(playlistId, playlistViewModel, playerViewModel, navController)
         }
 
     }

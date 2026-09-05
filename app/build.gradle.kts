@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.echosphere"
+    namespace = "com.ayushlodha.echosphere"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.echosphere"
+        applicationId = "com.ayushlodha.echosphere"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
